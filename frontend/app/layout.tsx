@@ -1,3 +1,5 @@
+import { LanguageProvider } from "@/components/providers/language-provider";
+import { SiteHeader } from "@/components/layout/site-header";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Nunito_Sans } from "next/font/google";
 import "./globals.css";
@@ -22,6 +24,8 @@ export const metadata: Metadata = {
   description: "Marketing that pays for itself.",
 };
 
+
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -30,9 +34,14 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${nunitoSans.variable} dark`}>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#0f0809] text-white`}
       >
-        {children}
+        <LanguageProvider>
+          <SiteHeader />
+          <div className="pt-[64px]">
+            {children}
+          </div>
+        </LanguageProvider>
       </body>
     </html>
   );

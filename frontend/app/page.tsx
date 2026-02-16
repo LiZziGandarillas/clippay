@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
+import Link from "next/link"; // Added Link
 import {
   ShieldCheck,
   Rocket,
@@ -30,27 +31,14 @@ import {
   Sparkles,
   Building2,
 } from "lucide-react";
-import { translations } from "@/lib/translations";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { HeroVideo } from "@/components/hero-video";
+import { useLanguage } from "@/components/providers/language-provider"; // Added import
 
 export default function Page() {
-  const [lang, setLang] = useState<"en" | "es">("en");
+  const { t } = useLanguage(); // Replaced state logic
   const { scrollYProgress } = useScroll();
   const y = useTransform(scrollYProgress, [0, 1], [0, -50]);
-
-  useEffect(() => {
-    const browserLang = navigator.language.split("-")[0];
-    if (browserLang === "es") {
-      setLang("es");
-    }
-  }, []);
-
-  const toggleLanguage = () => {
-    setLang((prev) => (prev === "en" ? "es" : "en"));
-  };
-
-  const t = translations[lang];
 
   // Animation variants
   const fadeIn = {
@@ -76,50 +64,6 @@ export default function Page() {
         className="absolute inset-0 -z-10 h-full w-full bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"
       >
         <div className="absolute left-0 right-0 top-0 -z-10 m-auto h-[310px] w-[310px] rounded-full bg-primary/20 opacity-20 blur-[100px]" />
-      </motion.div>
-
-      {/* Header */}
-      <motion.div 
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        transition={{ type: "spring", stiffness: 100, damping: 20 }}
-        className="fixed top-0 left-0 right-0 z-50 flex h-[64px] items-center border-b border-white/5 bg-background/60 backdrop-blur-md"
-      >
-        <div className="container mx-auto flex h-full items-center justify-between px-4 lg:px-8">
-          <div className="flex items-center gap-2">
-            <motion.div 
-              whileHover={{ rotate: 10 }}
-              className="relative size-8 shrink-0"
-            >
-              <Image 
-                src="/logo.png" 
-                alt="Clippay Logo" 
-                fill 
-                className="object-contain"
-              />
-            </motion.div>
-            <p className="text-lg font-bold tracking-tight text-foreground">
-              Clippay
-            </p>
-          </div>
-          <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={toggleLanguage}
-              className="px-2 text-muted-foreground hover:text-foreground"
-            >
-              <Languages className="mr-2 size-4" />
-              {lang.toUpperCase()}
-            </Button>
-            <Button variant="ghost" className="hidden text-sm text-muted-foreground hover:text-foreground sm:flex">
-              {t.nav.signIn}
-            </Button>
-            <Button size="sm" className="h-9 px-4 text-sm font-medium shadow-none hover:shadow-primary/25 transition-shadow">
-              {t.nav.getStarted}
-            </Button>
-          </div>
-        </div>
       </motion.div>
 
       <div className="relative flex w-full flex-col">
@@ -180,14 +124,18 @@ export default function Page() {
             transition={{ delay: 0.9 }}
             className="mt-12 flex w-full flex-col items-center justify-center gap-4 px-4 sm:flex-row"
           >
-            <Button size="lg" className="group h-12 min-w-[160px] bg-primary text-primary-foreground hover:bg-primary/90 text-base font-bold shadow-lg shadow-primary/25 transition-all hover:shadow-xl hover:shadow-primary/40">
-              {t.hero.ctaPrimary}
-              <Sparkles className="ml-2 size-4 transition-transform group-hover:scale-110" />
-            </Button>
-            <Button size="lg" className="group h-12 min-w-[160px] bg-[#1DE1B9] text-black hover:bg-[#1DE1B9]/90 border-transparent text-base font-bold shadow-[0_0_20px_rgba(29,225,185,0.3)] transition-all hover:shadow-[0_0_30px_rgba(29,225,185,0.5)]">
-              {t.hero.ctaSecondary}
-              <Building2 className="ml-2 size-4 transition-transform group-hover:scale-110" />
-            </Button>
+            <Link href="/influencer/dashboard">
+              <Button size="lg" className="group h-12 min-w-[160px] bg-primary text-primary-foreground hover:bg-primary/90 text-base font-bold shadow-lg shadow-primary/25 transition-all hover:shadow-xl hover:shadow-primary/40">
+                {t.hero.ctaPrimary}
+                <Sparkles className="ml-2 size-4 transition-transform group-hover:scale-110" />
+              </Button>
+            </Link>
+            <Link href="/brand/dashboard">
+              <Button size="lg" className="group h-12 min-w-[160px] bg-[#1DE1B9] text-black hover:bg-[#1DE1B9]/90 border-transparent text-base font-bold shadow-[0_0_20px_rgba(29,225,185,0.3)] transition-all hover:shadow-[0_0_30px_rgba(29,225,185,0.5)]">
+                {t.hero.ctaSecondary}
+                <Building2 className="ml-2 size-4 transition-transform group-hover:scale-110" />
+              </Button>
+            </Link>
           </motion.div>
 
           {/* Hero Visual/Stats - Bento Grid Style */}

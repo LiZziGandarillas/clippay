@@ -1,27 +1,29 @@
 "use client";
 
 import { useLanguage } from "@/components/providers/language-provider";
+import { useClippayWallet } from "@/hooks/use-clippay-wallet";
+import { WalletGate } from "@/components/wallet-gate";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Copy, DollarSign, QrCode, Wallet } from "lucide-react";
+import { CheckCircle2, Copy, DollarSign, QrCode } from "lucide-react";
 
 export default function InfluencerDashboardPage() {
   const { t } = useLanguage();
+  const { shortAddress } = useClippayWallet();
 
   return (
+    <WalletGate role="influencer">
     <div className="min-h-screen bg-[#0f0809] text-white p-6 flex flex-col items-center">
       <div className="w-full max-w-4xl space-y-6">
         
-        {/* Header content removed as it's in layout now, keeping page specific */}
+        {/* Page header */}
         <div className="flex justify-between items-center mb-6">
             <div>
                 <h1 className="text-xl font-light">{t.influencer.creatorHub}</h1>
                 <p className="text-xs text-white/50 uppercase tracking-widest">{t.influencer.activeBounties}</p>
             </div>
-            <Button variant="outline" className="border-white/10 bg-white/5 text-xs h-8 gap-2 hover:bg-white/10 hover:text-white">
-                <Wallet className="h-3 w-3" /> {t.influencer.connectWallet}
-            </Button>
+            <span className="text-xs font-mono text-white/40">{shortAddress}</span>
         </div>
 
         {/* Earnings Card */}
@@ -125,5 +127,6 @@ export default function InfluencerDashboardPage() {
         </div>
       </div>
     </div>
+    </WalletGate>
   );
 }

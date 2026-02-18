@@ -1,6 +1,8 @@
 "use client";
 
 import { useLanguage } from "@/components/providers/language-provider";
+import { useClippayWallet } from "@/hooks/use-clippay-wallet";
+import { WalletGate } from "@/components/wallet-gate";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +11,9 @@ import Link from "next/link";
 
 export default function BrandDashboardPage() {
   const { t } = useLanguage();
+  const { shortAddress } = useClippayWallet();
   return (
+    <WalletGate role="brand">
     <div className="min-h-screen bg-[#0f0809] text-white p-6 flex flex-col items-center">
       <div className="w-full max-w-4xl space-y-8">
         {/* Header - Removed manual header as it is in layout now, keeping title section */}
@@ -47,7 +51,7 @@ export default function BrandDashboardPage() {
                             </div>
                          </div>
                          <Badge variant="outline" className="bg-[#1DE1B9]/10 text-[#1DE1B9] border-[#1DE1B9]/20 text-[10px] py-0 px-2 h-6">
-                            STELLAR MAINNET
+                            STELLAR TESTNET
                          </Badge>
                     </div>
 
@@ -231,5 +235,6 @@ export default function BrandDashboardPage() {
         </div>
       </div>
     </div>
+    </WalletGate>
   );
 }

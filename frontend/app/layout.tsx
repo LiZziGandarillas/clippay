@@ -1,4 +1,5 @@
 import { LanguageProvider } from "@/components/providers/language-provider";
+import { Web3Providers } from "@/components/providers/web3-providers";
 import { SiteHeader } from "@/components/layout/site-header";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Nunito_Sans } from "next/font/google";
@@ -37,10 +38,12 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#0f0809] text-white`}
       >
         <LanguageProvider>
-          <SiteHeader />
-          <div className="pt-[64px]">
-            {children}
-          </div>
+          <Web3Providers>
+            <SiteHeader />
+            <div className="pt-[64px]">
+              {children}
+            </div>
+          </Web3Providers>
         </LanguageProvider>
       </body>
     </html>

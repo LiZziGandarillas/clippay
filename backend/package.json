@@ -1,32 +1,47 @@
 {
   "name": "clippay-backend",
-  "version": "0.1.0",
-  "description": "Backend API for ClipPay platform",
+  "version": "1.0.0",
+  "description": "Backend API for ClipPay - Hybrid Architecture (Blockchain + PostgreSQL)",
   "main": "src/index.js",
   "type": "module",
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio",
+    "db:seed": "node prisma/seed.js",
+    "db:reset": "prisma migrate reset --force",
+    "test": "echo \"Tests not implemented yet\" && exit 0"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.js"
   },
   "keywords": [
     "stellar",
     "soroban",
     "blockchain",
-    "marketing",
-    "api"
+    "performance-marketing",
+    "prisma",
+    "postgresql"
   ],
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@prisma/client": "^6.1.0",
     "@stellar/stellar-sdk": "^14.0.0",
+    "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
-    "dotenv": "^17.2.3",
-    "express": "^5.2.1",
-    "helmet": "^8.0.0"
+    "dotenv": "^16.4.5",
+    "express": "^5.0.1",
+    "express-rate-limit": "^8.2.1",
+    "helmet": "^8.0.0",
+    "jsonwebtoken": "^9.0.2"
   },
   "devDependencies": {
-    "nodemon": "^3.1.9"
+    "nodemon": "^3.1.9",
+    "prisma": "^6.1.0"
   },
   "engines": {
     "node": ">=18.0.0"

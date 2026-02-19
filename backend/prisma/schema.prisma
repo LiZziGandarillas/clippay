@@ -1,0 +1,177 @@
+// Prisma Schema - ClipPay Database
+// Guarda metadata y facilita búsquedas rápidas
+// Los datos financieros críticos están en el smart contract
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== USERS ====================
+
+enum UserType {
+  BUSINESS
+  INFLUENCER
+}
+
+model User {
+  id              String   @id @default(uuid())
+  email           String   @unique
+  password_hash   String
+  stellar_address String   @unique
+  type            UserType
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  // Relations
+  campaigns  Campaign[]
+  influencers Influencer[]
+
+  @@index([email])
+  @@index([stellar_address])
+}
+
+// ==================== CAMPAIGNS ====================
+
+model Campaign {
+  id            String   @id @default(uuid())
+  blockchain_id BigInt   @unique // ID del smart contract
+  user_id       String
+  
+  // Metadata (NO está en blockchain)
+  name          String
+  description   String?  @db.Text
+  image_url     String?
+  category      String?
+  terms         String?  @db.Text
+  
+  // Caché de datos del blockchain (para búsquedas rápidas)
+  budget         BigInt
+  spent          BigInt   @default(0)
+  commission_rate Int     // Basis points
+  is_active      Boolean  @default(true)
+  
+  // Timestamps
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  // Relations
+  user        User         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  influencers Influencer[]
+  conversions Conversion[]
+
+  @@index([blockchain_id])
+  @@index([user_id])
+  @@index([is_active])
+  @@index([created_at])
+}
+
+// ==================== INFLUENCERS ====================
+
+model Influencer {
+  id            String   @id @default(uuid())
+  blockchain_id BigInt   @unique // ID del smart contract
+  user_id       String
+  campaign_id   String
+  
+  // Código de referido (generado y guardado aquí)
+  referral_code String   @unique
+  
+  // Caché de datos del blockchain
+  total_conversions Int      @default(0)
+  total_earned      BigInt   @default(0)
+  
+  // Timestamps
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  // Relations
+  user        User         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  campaign    Campaign     @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
+  conversions Conversion[]
+
+  @@index([blockchain_id])
+  @@index([user_id])
+  @@index([campaign_id])
+  @@index([referral_code])
+}
+
+// ==================== CONVERSIONS ====================
+
+enum ConversionStatus {
+  PENDING
+  VERIFIED
+  PAID
+  FAILED
+}
+
+model Conversion {
+  id            String           @id @default(uuid())
+  blockchain_id BigInt           @unique // ID del smart contract
+  tracking_id   String           @unique // ID de tracking generado
+  
+  campaign_id   String
+  influencer_id String
+  
+  // Datos de la conversión
+  purchase_amount BigInt
+  commission      BigInt
+  
+  // Metadata adicional
+  buyer_confirmation Boolean @default(false)
+  status            ConversionStatus @default(PENDING)
+  
+  // Referencia a transacción blockchain
+  blockchain_tx_hash String?
+  
+  // Timestamps
+  timestamp  BigInt   // Unix timestamp de la transacción
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // Relations
+  campaign   Campaign   @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
+  influencer Influencer @relation(fields: [influencer_id], references: [id], onDelete: Cascade)
+
+  @@index([blockchain_id])
+  @@index([campaign_id])
+  @@index([influencer_id])
+  @@index([tracking_id])
+  @@index([status])
+  @@index([created_at])
+}
+
+// ==================== SESSIONS (Auth) ====================
+
+model Session {
+  id         String   @id @default(uuid())
+  user_id    String
+  token      String   @unique
+  expires_at DateTime
+  created_at DateTime @default(now())
+
+  @@index([token])
+  @@index([user_id])
+  @@index([expires_at])
+}
+
+// ==================== AUDIT LOG ====================
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  user_id    String?
+  action     String   // e.g., "CREATE_CAMPAIGN", "REGISTER_CONVERSION"
+  resource   String   // e.g., "campaigns", "conversions"
+  resource_id String?
+  details    Json?
+  ip_address String?
+  created_at DateTime @default(now())
+
+  @@index([user_id])
+  @@index([action])
+  @@index([created_at])
+}

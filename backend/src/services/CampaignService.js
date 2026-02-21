@@ -81,7 +81,16 @@ export class CampaignService {
             }),
         ]);
 
-        return { campaign: updated, transaction: result };
+        const safeTransaction = {
+            success: result.success,
+            transaction_hash: result.transaction_hash,
+            deposited_amount: Number(result.deposited_amount),
+            deposited_xlm: result.deposited_xlm,
+            new_budget: Number(result.new_budget),
+            new_budget_xlm: result.new_budget_xlm,
+        };
+
+        return { campaign: updated, transaction: safeTransaction };
     }
 
     static async getByBlockchainId(blockchainId) {

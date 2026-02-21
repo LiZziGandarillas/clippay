@@ -179,8 +179,6 @@ impl ClipPayContract {
     }
 
     pub fn withdraw_earnings(env: Env, influencer_id: u64, to: Address) -> i128 {
-        to.require_auth();
-
         let mut influencer: Influencer = env
             .storage()
             .persistent()

@@ -25,6 +25,8 @@ export class InfluencerService {
         const client = await getContractClient();
         const tx = await client.register_influencer({
             campaign_id: campaign.blockchain_id,
+            // Registrar la wallet REAL del influencer en el contrato
+            // para que withdraw_earnings pueda transferirle directamente
             influencer_address: user.stellar_address,
         });
 
@@ -51,14 +53,22 @@ export class InfluencerService {
     static async withdraw(influencerId, userId) {
         const influencer = await prisma.influencer.findUnique({
             where: { id: influencerId },
-            include: { user: true, campaign: { select: { name: true } } },
+            include: {
+                user: { select: { stellar_address: true } },
+                campaign: { select: { name: true } },
+            },
         });
 
         if (!influencer) throw new Error("Influencer not found");
         if (influencer.user_id !== userId) throw new Error("Only influencer owner can withdraw");
         if (influencer.total_earned === 0n) throw new Error("No earnings to withdraw");
 
-        const result = await TransactionService.withdrawEarnings(influencer.blockchain_id);
+        // Pasar la wallet real del influencer para que el contrato
+        // transfiera el XLM directamente a su dirección
+        const result = await TransactionService.withdrawEarnings(
+            influencer.blockchain_id,
+            influencer.user.stellar_address
+        );
 
         const [updated] = await prisma.$transaction([
             prisma.influencer.update({
@@ -75,6 +85,7 @@ export class InfluencerService {
                         withdrawn_amount: result.withdrawn_amount,
                         blockchain_id: Number(influencer.blockchain_id),
                         transaction_hash: result.transaction_hash,
+                        to_address: influencer.user.stellar_address,
                     },
                 },
             }),

@@ -36,11 +36,12 @@ export class TransactionService {
         }
     }
 
-    static async withdrawEarnings(influencerBlockchainId) {
+    // influencerAddress: la wallet real del influencer (registrada en el contrato)
+    static async withdrawEarnings(influencerBlockchainId, influencerAddress) {
         try {
             const client = await getContractClient();
-            const publicKey = getPublicKey();
 
+            // Verificar earnings antes de intentar el retiro
             const influencerTx = await client.get_influencer({
                 influencer_id: BigInt(influencerBlockchainId),
             });
@@ -49,11 +50,14 @@ export class TransactionService {
 
             if (earned === 0n) throw new Error("No earnings to withdraw");
 
-            console.log(`🔄 Withdrawing ${Number(earned) / 10_000_000} XLM from contract...`);
+            console.log(`🔄 Withdrawing ${Number(earned) / 10_000_000} XLM to ${influencerAddress}...`);
 
+            // "to" debe ser la wallet real del influencer — es quien el contrato
+            // verifica con assert_eq!(influencer.address, to)
+            console.log("🔍 Withdrawing to address:", influencerAddress);
             const tx = await client.withdraw_earnings({
                 influencer_id: BigInt(influencerBlockchainId),
-                to: publicKey,
+                to: influencerAddress,
             });
 
             const { result } = await tx.signAndSend();

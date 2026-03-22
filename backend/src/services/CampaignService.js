@@ -15,13 +15,11 @@ export class CampaignService {
         if (user.type !== "BUSINESS") throw new Error("Only business users can create campaigns");
 
         const serverPublicKey = getPublicKey();
-
         const client = await getContractClient();
         const tx = await client.create_campaign({
             business_id: serverPublicKey,
             commission_rate: Number(commission_rate),
         });
-
         const { result } = await tx.signAndSend();
         const blockchainId = Number(result);
 
@@ -91,6 +89,16 @@ export class CampaignService {
         };
 
         return { campaign: updated, transaction: safeTransaction };
+    }
+
+    static async getById(id) {
+        return await prisma.campaign.findUnique({
+            where: { id },
+            include: {
+                user: { select: { id: true, email: true, stellar_address: true } },
+                _count: { select: { influencers: true, conversions: true } },
+            },
+        });
     }
 
     static async getByBlockchainId(blockchainId) {

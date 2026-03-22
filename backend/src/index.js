@@ -37,9 +37,10 @@ app.get("/health", (req, res) => {
         environment: process.env.NODE_ENV || "development",
         architecture: "hybrid",
         components: {
-            database: "postgresql",
+            database: "supabase-postgresql",
             blockchain: "stellar-soroban",
-            cache: "prisma-orm",
+            auth: "supabase-auth",
+            storage: "supabase-storage",
         },
     });
 });
@@ -52,7 +53,9 @@ app.get("/", (req, res) => {
         architecture: {
             type: "hybrid",
             blockchain: "Stellar Soroban (financial data)",
-            database: "PostgreSQL (metadata & cache)",
+            database: "Supabase PostgreSQL (metadata & cache)",
+            auth: "Supabase Auth",
+            storage: "Supabase Storage",
         },
         endpoints: {
             auth: "/api/v1/auth",
@@ -71,9 +74,7 @@ app.use("/api/v1/influencers", influencersRoutes);
 app.use("/api/v1/conversions", conversionsRoutes);
 
 app.use(notFoundHandler);
-
 app.use(errorHandler);
-
 
 app.listen(PORT, () => {
     console.log(`
@@ -85,23 +86,29 @@ app.listen(PORT, () => {
 
   📍 Server:        http://localhost:${PORT}
   🌍 Environment:   ${process.env.NODE_ENV || "development"}
-  🗄️  Database:      PostgreSQL (${process.env.DATABASE_URL ? "✓ Connected" : "⚠ Not configured"})
+  🗄️  Database:      Supabase PostgreSQL (${process.env.DATABASE_URL ? "✓ Connected" : "⚠ Not configured"})
+  🔐 Auth:          Supabase Auth (${process.env.SUPABASE_URL ? "✓ Configured" : "⚠ Not configured"})
+  📦 Storage:       Supabase Storage (${process.env.SUPABASE_URL ? "✓ Configured" : "⚠ Not configured"})
   ⛓️  Blockchain:    Stellar Testnet
   📝 Contract:      ${process.env.CONTRACT_ID ? process.env.CONTRACT_ID.substring(0, 10) + "..." : "⚠ Not configured"}
 
 📡 API Endpoints:
   ├─ POST   /api/v1/auth/register
   ├─ POST   /api/v1/auth/login
+  ├─ POST   /api/v1/auth/refresh
   ├─ GET    /api/v1/auth/me
   │
   ├─ POST   /api/v1/campaigns
   ├─ GET    /api/v1/campaigns
   ├─ GET    /api/v1/campaigns/:id
   ├─ PATCH  /api/v1/campaigns/:id
+  ├─ POST   /api/v1/campaigns/:id/image
   ├─ POST   /api/v1/campaigns/:id/deactivate
-  ├─ POST   /api/v1/campaigns/:id/deposit
+  ├─ POST   /api/v1/campaigns/:id/deposit-blockchain
+  ├─ GET    /api/v1/campaigns/:id/escrow-balance
   │
   ├─ POST   /api/v1/influencers/register
+  ├─ POST   /api/v1/influencers/withdraw
   ├─ GET    /api/v1/influencers/me
   ├─ GET    /api/v1/influencers/:id
   ├─ GET    /api/v1/influencers/:id/stats
@@ -118,19 +125,17 @@ app.listen(PORT, () => {
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 `);
 
-    if (!process.env.CONTRACT_ID) {
-        console.warn("\n⚠️  WARNING: CONTRACT_ID not configured in .env");
-        console.warn("   Smart contract functionality will not work\n");
-    }
+    const missing = [];
+    if (!process.env.CONTRACT_ID) missing.push("CONTRACT_ID");
+    if (!process.env.DATABASE_URL) missing.push("DATABASE_URL");
+    if (!process.env.SUPABASE_URL) missing.push("SUPABASE_URL");
+    if (!process.env.SUPABASE_ANON_KEY) missing.push("SUPABASE_ANON_KEY");
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) missing.push("SUPABASE_SERVICE_ROLE_KEY");
 
-    if (!process.env.DATABASE_URL) {
-        console.warn("\n⚠️  WARNING: DATABASE_URL not configured in .env");
-        console.warn("   Database functionality will not work\n");
-    }
-
-    if (!process.env.JWT_SECRET) {
-        console.warn("\n⚠️  WARNING: JWT_SECRET not configured in .env");
-        console.warn("   Authentication will not work securely\n");
+    if (missing.length > 0) {
+        console.warn("\n⚠️  WARNING: Missing environment variables:");
+        missing.forEach(v => console.warn(`   - ${v}`));
+        console.warn("   Some features may not work correctly.\n");
     }
 });
 

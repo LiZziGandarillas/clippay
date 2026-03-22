@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { AuthService } from "../services/AuthService.js";
+import { supabaseAdmin } from "../config/supabase.js";
 import { authenticate } from "../middleware/auth.js";
 import { asyncHandler } from "../middleware/errorHandler.js";
 import { authLimiter } from "../middleware/rateLimiter.js";
@@ -35,6 +36,7 @@ router.post(
             message: "User registered successfully",
             user: result.user,
             token: result.token,
+            refresh_token: result.refresh_token,
         });
     })
 );
@@ -51,6 +53,7 @@ router.post(
             message: "Login successful",
             user: result.user,
             token: result.token,
+            refresh_token: result.refresh_token,
         });
     })
 );
@@ -93,6 +96,24 @@ router.post(
     asyncHandler(async (req, res) => {
         await AuthService.invalidateSession(req.token);
         res.json({ message: "Logged out successfully" });
+    })
+);
+
+router.post(
+    "/refresh",
+    asyncHandler(async (req, res) => {
+        const { refresh_token } = req.body;
+        if (!refresh_token) {
+            return res.status(400).json({ error: "refresh_token is required" });
+        }
+
+        const { data, error } = await supabaseAdmin.auth.refreshSession({ refresh_token });
+        if (error) return res.status(401).json({ error: "Invalid refresh token" });
+
+        res.json({
+            token: data.session.access_token,
+            refresh_token: data.session.refresh_token,
+        });
     })
 );
 

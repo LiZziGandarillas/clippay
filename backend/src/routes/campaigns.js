@@ -8,8 +8,14 @@ import {
     validateNumericParam,
 } from "../middleware/validation.js";
 import { formatBigIntToNumber } from "../utils/helpers.js";
+import multer from "multer";
+import { StorageService } from "../services/StorageService.js";
 
 const router = Router();
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024 },
+});
 
 router.post(
     "/",
@@ -68,6 +74,28 @@ router.post(
                 transaction_hash: result.transaction.transaction_hash,
             },
         });
+    })
+);
+
+router.post(
+    "/:id/image",
+    authenticate,
+    requireType("BUSINESS"),
+    upload.single("image"),
+    asyncHandler(async (req, res) => {
+        if (!req.file) {
+            return res.status(400).json({ error: "No image provided" });
+        }
+
+        const campaign = await CampaignService.getById(req.params.id);
+        if (!campaign || campaign.user_id !== req.user.id) {
+            return res.status(403).json({ error: "Access denied" });
+        }
+
+        const imageUrl = await StorageService.uploadCampaignImage(req.file, req.params.id);
+        await CampaignService.updateMetadata(req.params.id, { image_url: imageUrl });
+
+        res.json({ message: "Image uploaded successfully", image_url: imageUrl });
     })
 );
 

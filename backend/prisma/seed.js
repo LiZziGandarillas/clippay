@@ -1,7 +1,41 @@
 import { PrismaClient } from "@prisma/client";
-import bcrypt from "bcryptjs";
+import { createClient } from "@supabase/supabase-js";
+import "dotenv/config";
 
 const prisma = new PrismaClient();
+const supabaseAdmin = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+);
+
+async function createTestUser(email, type, stellar_address) {
+    const { data, error } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        password: "password123",
+        email_confirm: true,
+        user_metadata: { type, stellar_address },
+    });
+
+    if (error && !error.message.includes("already registered")) {
+        throw error;
+    }
+
+    const userId = data?.user?.id ?? (
+        await supabaseAdmin.auth.admin.listUsers()
+    ).data.users.find(u => u.email === email)?.id;
+
+    return await prisma.user.upsert({
+        where: { email },
+        update: {},
+        create: {
+            id: userId,
+            email,
+            type,
+            stellar_address,
+        },
+    });
+}
 
 async function main() {
     console.log("🌱 Seeding database...");
@@ -9,38 +43,25 @@ async function main() {
     await prisma.conversion.deleteMany();
     await prisma.influencer.deleteMany();
     await prisma.campaign.deleteMany();
-    await prisma.session.deleteMany();
     await prisma.user.deleteMany();
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash("password123", salt);
+    const business = await createTestUser(
+        "business@test.com",
+        "BUSINESS",
+        "GBZGZJIH6DFKULNO2NXJAHLYKSP43BHXK2MQCFRPUB6Z4CIZDX5IFDI6"
+    );
 
-    const business = await prisma.user.create({
-        data: {
-            email: "business@test.com",
-            password_hash: hashedPassword,
-            type: "BUSINESS",
-            stellar_address: "GBZGZJIH6DFKULNO2NXJAHLYKSP43BHXK2MQCFRPUB6Z4CIZDX5IFDI6",
-        },
-    });
+    const influencer1 = await createTestUser(
+        "influencer1@test.com",
+        "INFLUENCER",
+        "GCJV2WUYLOGAHWFXWB772FDXVC4Y63AUNNWMCQR3IHL3Z2YM4DGWIXZM"
+    );
 
-    const influencer1 = await prisma.user.create({
-        data: {
-            email: "influencer1@test.com",
-            password_hash: hashedPassword,
-            type: "INFLUENCER",
-            stellar_address: "GCJV2WUYLOGAHWFXWB772FDXVC4Y63AUNNWMCQR3IHL3Z2YM4DGWIXZM",
-        },
-    });
-
-    const influencer2 = await prisma.user.create({
-        data: {
-            email: "influencer2@test.com",
-            password_hash: hashedPassword,
-            type: "INFLUENCER",
-            stellar_address: "GASEF7VZY6QJVGQ5H4A4ZUE7PW6UIVJ5E3AQDIANFCXTFZUCEYMDMXH5",
-        },
-    });
+    const influencer2 = await createTestUser(
+        "influencer2@test.com",
+        "INFLUENCER",
+        "GASEF7VZY6QJVGQ5H4A4ZUE7PW6UIVJ5E3AQDIANFCXTFZUCEYMDMXH5"
+    );
 
     console.log("✅ Created test users:");
     console.log(`   Business: ${business.email}`);

@@ -3,27 +3,25 @@ import { AuthService } from "../services/AuthService.js";
 export const authenticate = async (req, res, next) => {
     try {
         const authHeader = req.headers.authorization;
-        
+
         if (!authHeader || !authHeader.startsWith("Bearer ")) {
-            return res.status(401).json({ 
-                error: "No token provided" 
-            });
+            return res.status(401).json({ error: "No token provided" });
         }
 
         const token = authHeader.replace("Bearer ", "");
-        
-        const decoded = AuthService.verifyToken(token);
-        
-        const user = await AuthService.getUserById(decoded.userId);
-        
+
+        const supabaseUser = await AuthService.verifyToken(token);
+
+        const user = await AuthService.getUserById(supabaseUser.id);
+
         req.user = user;
         req.token = token;
-        
+
         next();
     } catch (error) {
-        return res.status(401).json({ 
+        return res.status(401).json({
             error: "Invalid or expired token",
-            message: error.message 
+            message: error.message,
         });
     }
 };
@@ -31,15 +29,13 @@ export const authenticate = async (req, res, next) => {
 export const requireType = (type) => {
     return (req, res, next) => {
         if (!req.user) {
-            return res.status(401).json({ 
-                error: "Authentication required" 
-            });
+            return res.status(401).json({ error: "Authentication required" });
         }
 
         if (req.user.type !== type) {
-            return res.status(403).json({ 
+            return res.status(403).json({
                 error: "Forbidden",
-                message: `Only ${type} users can access this endpoint` 
+                message: `Only ${type} users can access this endpoint`,
             });
         }
 
@@ -50,11 +46,11 @@ export const requireType = (type) => {
 export const optionalAuth = async (req, res, next) => {
     try {
         const authHeader = req.headers.authorization;
-        
+
         if (authHeader && authHeader.startsWith("Bearer ")) {
             const token = authHeader.replace("Bearer ", "");
-            const decoded = AuthService.verifyToken(token);
-            const user = await AuthService.getUserById(decoded.userId);
+            const supabaseUser = await AuthService.verifyToken(token);
+            const user = await AuthService.getUserById(supabaseUser.id);
             req.user = user;
         }
     } catch (error) {
